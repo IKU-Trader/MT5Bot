@@ -26,22 +26,22 @@ CLOSE = 'close'
 VOLUME = 'volume'
 
     
-MINUTE = 'MINUTE'
-HOUR = 'HOUR'
-DAY = 'DAY'
+UNIT_MINUTE = 'MINUTE'
+UNIT_HOUR = 'HOUR'
+UNIT_DAY = 'DAY'
 
 TIMEZONE_TOKYO = timezone(timedelta(hours=+9), 'Asia/Tokyo')
 
              # symbol : [(mt5 timeframe constants), number, unit]
-TIMEFRAME = {'M1': [mt5.TIMEFRAME_M1,  1, MINUTE],
-             'M5': [mt5.TIMEFRAME_M5,  5, MINUTE],
-             'M10': [mt5.TIMEFRAME_M10, 10, MINUTE],
-             'M15': [mt5.TIMEFRAME_M15, 15, MINUTE],
-             'M30': [mt5.TIMEFRAME_M30, 30, MINUTE],
-             'H1': [mt5.TIMEFRAME_H1  ,  1, HOUR],
-             'H4': [mt5.TIMEFRAME_H4,    4, HOUR],
-             'H8': [mt5.TIMEFRAME_H8,    8, HOUR],
-             'D1': [mt5.TIMEFRAME_D1,    1, DAY]}
+TIMEFRAME = {'M1': [mt5.TIMEFRAME_M1,  1, UNIT_MINUTE],
+             'M5': [mt5.TIMEFRAME_M5,  5, UNIT_MINUTE],
+             'M10': [mt5.TIMEFRAME_M10, 10, UNIT_MINUTE],
+             'M15': [mt5.TIMEFRAME_M15, 15, UNIT_MINUTE],
+             'M30': [mt5.TIMEFRAME_M30, 30, UNIT_MINUTE],
+             'H1': [mt5.TIMEFRAME_H1  ,  1, UNIT_HOUR],
+             'H4': [mt5.TIMEFRAME_H4,    4, UNIT_HOUR],
+             'H8': [mt5.TIMEFRAME_H8,    8, UNIT_HOUR],
+             'D1': [mt5.TIMEFRAME_D1,    1, UNIT_DAY]}
 
 LONG = 1
 SHORT = -1
@@ -50,8 +50,10 @@ ATR = 'atr'
 TR = 'tr'
 SMA = 'sma'
 HL2 = 'hl2'
-ATR_BAND_UPPER = 'atr_upper'
-ATR_BAND_LOWER = 'atr_lower'
+ATR_BAND_UPPER = 'atr_band_upper'
+ATR_BAND_LOWER = 'atr_band_lower'
+ATR_BREAKUP_SIGNAL = 'atr_breakup_signal'
+ATR_BREAKDOWN_SIGNAL = 'atr_breakdown_signal'
 
 WINDOW = 'window'
 COEFF = 'coeff'

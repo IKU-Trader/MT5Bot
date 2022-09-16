@@ -1,11 +1,11 @@
 # -*- coding: utf-8 -*-
 
 import pandas as pd
+import numpy as np
 
 from const import *
 from TechnicalAnalysis import atr, sma
 from utility import dic2Arrays, sliceDic, dic2df
-import CsvReader
 
 class DataBuffer:
     def __init__(self, features:list, calc_functions: dict):
@@ -28,7 +28,7 @@ class DataBuffer:
     def size(self):
         if self.dic is None:
             return 0
-        return len(self.dic[TIMESTAMP])
+        return len(self.dic[TIMEJST])
     
     def lastTime(self):
         if self.size() > 0:

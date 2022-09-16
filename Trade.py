@@ -6,10 +6,11 @@ Created on Fri Sep  9 14:50:41 2022
 """
 
 from DataBuffer import DataBuffer
-from const import *
-from CsvReader import *
-from TechnicalAnalysis import atr, sma, atrband
-from utility import dic2Arrays, sliceDic, dic2df, splitDic, array2Dic
+from CandlePlot import CandlePlot, makeFig
+from const import * 
+from TechnicalAnalysis import atr, sma, atrband, atrbreak
+from MarketData import MarketData
+from utility import dic2Arrays, sliceDic, dic2df, df2dic, splitDic, array2Dic
 
 TYPE_FIX_PRICE = 0
 TYPE_OPEN_TIME = 1
@@ -76,14 +77,29 @@ class Trade:
         
 # -----
 def test1():
-    dic, length = CsvReader.loadBitflyerCsv('./data/btcjpy_m15s.csv')
-    features = [SMA, ATR, ATR_BAND_LOWER, ATR_BAND_UPPER]
-    calc_functions = {SMA: sma, ATR: atr, ATR_BAND_LOWER: atrband, ATR_BAND_UPPER: atrband}
+    data = MarketData('', 1, UNIT_MINUTE, False)
+    data.importTradingviewCsv('./data/tradingview/TVC_USOIL, 1.csv')
+    d = data.resample(5, UNIT_MINUTE)
+    dic = df2dic(d.df, time_key=TIMEJST)
+    features = [SMA, ATR, ATR_BAND_LOWER, ATR_BAND_UPPER, ATR_BREAKUP_SIGNAL, ATR_BREAKDOWN_SIGNAL]
+    calc_functions = {SMA: sma,
+                        ATR: atr,
+                        ATR_BAND_LOWER: atrband,
+                        ATR_BAND_UPPER: atrband, 
+                        ATR_BREAKUP_SIGNAL: atrbreak, 
+                        ATR_BREAKDOWN_SIGNAL: atrbreak}
     trade = Trade(features, calc_functions, dic)
     d = trade.buffer.data()
     df = dic2df(d)
     df.to_csv('./data/test1.csv', index=False)
     
+    fig, ax = makeFig(1, 1, (12, 5))
+    plot = CandlePlot(fig, ax, '')
+    plot.drawCandle(d[TIMEJST], d)
+    plot.drawLine(d[TIMEJST], d[ATR_BAND_UPPER], color='blue')
+    plot.drawLine(d[TIMEJST], d[ATR_BAND_LOWER], color='red')
+    plot.drawMarkers(d[TIMEJST], d[CLOSE], 0.2, d[ATR_BREAKUP_SIGNAL], 1, '^', 'blue')
+    plot.drawMarkers(d[TIMEJST], d[CLOSE], -0.2, d[ATR_BREAKDOWN_SIGNAL], 1, 'v', 'red')
     
 def test2():
     dic, length = CsvReader.loadBitflyerCsv('./data/btcjpy_m15s.csv')
@@ -117,4 +133,4 @@ def test2():
     
     
 if __name__ == '__main__':
-    test2()
+    test1()

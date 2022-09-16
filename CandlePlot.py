@@ -14,6 +14,7 @@ from datetime import datetime
 
 import matplotlib.animation as animation
 import matplotlib.gridspec as gridspec
+from const import *
 
 
 DATE_FORMAT_TIME = '%H:%M'
@@ -165,7 +166,7 @@ class CandlePlot:
         self.ax.xaxis.set_major_formatter(mdates.DateFormatter(date_format))
         pass
         
-    def drawCandle(self, time, data:dict, keys, bar_width=None, timerange=None):    
+    def drawCandle(self, time, data:dict, keys=[OPEN, HIGH, LOW, CLOSE], bar_width=None, timerange=None):    
         ohlc = array2graphShape(data, keys) 
         self.ax.set_title(self.title)
         n = len(time)

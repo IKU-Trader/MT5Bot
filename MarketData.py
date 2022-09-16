@@ -10,10 +10,11 @@ import sys
 sys.path.append(os.path.join(os.path.dirname(__file__), './'))
 
 import pandas as pd
+import numpy as np
 from datetime import datetime, timezone, timedelta
-from utility import df2dic, jst2timestamp
-
-from const import *
+from utility import df2dic, jst2timestamp, dic2Arrays
+from const import OPEN, HIGH, LOW, CLOSE, VOLUME, TIMEJST, TIMESTAMP
+from const import UNIT_DAY, UNIT_HOUR, UNIT_MINUTE
 
 
 def timestamp2pydatetime(array):
@@ -39,47 +40,8 @@ def string2pydatetime(array:list, form='%Y-%m-%d %H:%M:%S%z', localize=True, off
             t = t.astimezone()
         out.append(t)
     return out    
-
-
-
-
-
-class CsvReader(object):
-
-    def __init__(self):
-        pass
-            
-    @classmethod        
-    def loadTradingviewCsv(cls, filepath):
-        df = pd.read_csv(filepath)
-        df = df.rename(columns={'time': TIMEJST})
-        #print(df.head())
-        jst = string2pydatetime(df[TIMEJST].values, form='%Y-%m-%dT%H:%M:%S')
-        df[TIMESTAMP] = jst2timestamp(jst)
-        df1 = df[[TIMESTAMP, OPEN, HIGH, LOW, CLOSE]]
-        data = df2dic(df1, is_numpy=False)
-        data[TIMEJST] = jst
-        return data, len(jst)
     
-    @classmethod 
-    def loadBitflyerCsv(cls, filepath):
-        df = pd.read_csv(filepath)
-        df = df.rename(columns={'time': TIMEJST})
-        jst = string2pydatetime(df[TIMEJST].values, form='%Y-%m-%d %H:%M:%S', offset=timedelta(hours=9))
-        df[TIMESTAMP] = jst2timestamp(jst)
-        df1 = df[[TIMESTAMP, OPEN, HIGH, LOW, CLOSE]]
-        data = df2dic(df1, is_numpy=False)
-        data[TIMEJST] = jst
-        return data , len(jst)
-            
-    @classmethod         
-    def loadMt5Csv(cls, filepath):
-        df = pd.read_csv(filepath)
-        jst = string2pydatetime(df[TIMEJST].values)
-        df1 = df[[TIMESTAMP, OPEN, HIGH, LOW, CLOSE, VOLUME]]
-        data = df2dic(df1, is_numpy=False)
-        data[TIMEJST] = jst
-        return data, len(jst)
+
     
 class MarketData:
     
@@ -88,7 +50,7 @@ class MarketData:
         self.interval = interval
         self.unit = unit
         self.is_volume = is_volume
-        self.df = pd.DataFrame(columns = COLUMNS)
+        self.df = None
         pass
     
     def setDataFrame(self, df):
@@ -110,10 +72,10 @@ class MarketData:
     def tohlcvList(self):
         times = self.pytime()
         #times = self.df['time'].strftime('%Y-%m-%d %H:%M:%S')
-        oo = self.df['open'].values.tolist()
-        hh = self.df['high'].values.tolist()
-        ll = self.df['low'].values.tolist()
-        cc = self.df['close'].values.tolist()
+        oo = self.df[OPEN].values.tolist()
+        hh = self.df[HIGH].values.tolist()
+        ll = self.df[LOW].values.tolist()
+        cc = self.df[CLOSE].values.tolist()
         vv = np.zeros(len(oo))
         data = []
         for t, o, h, l, c, v in zip(times, oo, hh, ll, cc, vv):
@@ -123,30 +85,30 @@ class MarketData:
     def tohlcList(self):
         times = self.pytime()
         #times = self.df['time'].strftime('%Y-%m-%d %H:%M:%S')
-        oo = self.df['open'].values.tolist()
-        hh = self.df['high'].values.tolist()
-        ll = self.df['low'].values.tolist()
-        cc = self.df['close'].values.tolist()
+        oo = self.df[OPEN].values.tolist()
+        hh = self.df[HIGH].values.tolist()
+        ll = self.df[LOW].values.tolist()
+        cc = self.df[CLOSE].values.tolist()
         data = []
         for t, o, h, l, c in zip(times, oo, hh, ll, cc):
             data.append([t, o, h, l, c])
         return data
     
     def ohlcArray(self):
-        o = self.df['open'].values.tolist()
-        h = self.df['high'].values.tolist()
-        l = self.df['low'].values.tolist()
-        c = self.df['close'].values.tolist()
+        o = self.df[OPEN].values.tolist()
+        h = self.df[HIGH].values.tolist()
+        l = self.df[LOW].values.tolist()
+        c = self.df[CLOSE].values.tolist()
         data = [o, h, l, c]
         return np.array(data).T
     
     def ohlcvArray(self):
-        o = self.df['open'].values.tolist()
-        h = self.df['high'].values.tolist()
-        l = self.df['low'].values.tolist()
-        c = self.df['close'].values.tolist()
+        o = self.df[OPEN].values.tolist()
+        h = self.df[HIGH].values.tolist()
+        l = self.df[LOW].values.tolist()
+        c = self.df[CLOSE].values.tolist()
         if self.is_volume:
-            v = self.df['volume'].values.tolist()
+            v = self.df[VOLUME].values.tolist()
         else:
             v = np.zeros(len(o))
         data = [o, h, l, c, v]
@@ -173,17 +135,17 @@ class MarketData:
         return times
     
     def timeStr(self, form = '%Y-%m-%d %H:%M:%S'):
-        return self.df['time'].strftime(form)
+        return self.df[TIMEJST].strftime(form)
     
     def tohlc(self):
         return [self.df.time, self.df.open, self.df.high, self.df.low, self.df.close]
-    
+    '''    
     def importFromSQLite(self, db_filepath, table_name):
         db = SQLite.SQLite(db_filepath)
         df = db.fetch(table_name)
         self.setDataFrame(df)
         return df
-        
+    '''        
     def importFromCsv(self, filepath):
         df0 = pd.read_csv(filepath, encoding = 'shiftjis')
         df = self.convert(df0, self.str2datetime1)
@@ -198,33 +160,63 @@ class MarketData:
         print('<<< end')
         pass
     
+    
+    def importTradingviewCsv(self, filepath):
+        df = pd.read_csv(filepath)
+        df = df.rename(columns={'time': TIMEJST})
+        #print(df.head())
+        jst = string2pydatetime(df[TIMEJST].values, form='%Y-%m-%dT%H:%M:%S')
+        df[TIMESTAMP] = jst2timestamp(jst)
+        df1 = df[[TIMESTAMP, OPEN, HIGH, LOW, CLOSE]]
+        df1[TIMEJST] = jst
+        self.df = df1
+        self.is_volume = False
+     
+    def importBitflyerCsv(self, filepath):
+        df = pd.read_csv(filepath)
+        df = df.rename(columns={'time': TIMEJST})
+        jst = string2pydatetime(df[TIMEJST].values, form='%Y-%m-%d %H:%M:%S', offset=timedelta(hours=9))
+        df[TIMESTAMP] = jst2timestamp(jst)
+        df1 = df[[TIMESTAMP, OPEN, HIGH, LOW, CLOSE]]
+        df1[TIMEJST] = jst
+        self.df = df1
+        self.is_volume = False
+                     
+    def importMt5Csv(self, filepath):
+        df = pd.read_csv(filepath)
+        jst = string2pydatetime(df[TIMEJST].values)
+        df1 = df[[TIMESTAMP, OPEN, HIGH, LOW, CLOSE, VOLUME]]
+        df1[TIMEJST] = jst
+        self.df = df1
+        self.is_volume = False
+    '''
     def exportToSQLight(self, filepath, table_name):
         db = SQLite.SQLite(filepath)
         db.create(table_name)
         db.insert(table_name, self.df.values)
         pass
-    
-    def convert(self, df, func):
+    '''
+    def convert(self, df, func, columns):
         tlist = df.iloc[:, 0].values.tolist()
         time = []
         for t in tlist:
             tt = func(str(t))
             time.append(tt)
         values = {}
-        for i in range(len(COLUMNS)):
-            column = COLUMNS[i]
+        for i in range(len(columns)):
+            column = columns[i]
             if i == 0:
                 values[column] = time
             else:
-                if self.is_volume == False and i == len(COLUMNS) -1:
+                if self.is_volume == False and i == len(columns) - 1:
                     values[column] = np.zeros(len(time)).tolist()
                 else:
                     values[column] = df.iloc[:, i].values.tolist()
-        out = pd.DataFrame(data = values, columns =COLUMNS, index = time)
+        out = pd.DataFrame(data = values, columns=columns, index=time)
         return out
             
     def str2datetime1(self, text):
-        t = datetime.datetime.strptime(text, '%Y/%m/%d %H:%M:%S')
+        t = datetime.strptime(text, '%Y/%m/%d %H:%M:%S')
         return t
     
     def str2datetime2(self, text):
@@ -238,52 +230,35 @@ class MarketData:
         df = self.tableToDf(table)
         return df
 
-    def tableToDf(self, table):
-        out = pd.DataFrame(columns = COLUMNS)
-        for data in table:
-            dic = {}
-            if type(data[0]) is int or type(data[0]) is float:
-                t = self.str2datetime2(str(int(data[0])))
-            else:
-                t = self.str2datetime1(str(data[0]))
-            dic[COLUMNS[0]] = t
-            dic[COLUMNS[1]] = float(data[1])
-            dic[COLUMNS[2]] = float(data[2])
-            dic[COLUMNS[3]] = float(data[3])
-            dic[COLUMNS[4]] = float(data[4])
-            if self.is_volume:
-                dic[COLUMNS[5]] = float(data[5])
-            else:
-                dic[COLUMNS[5]] = 0.0
-            out = out.append(pd.Series(dic), ignore_index = True)
-        return out
-
     def roundTime(self, time, interval, unit):
+        zone = time.tzinfo
         if unit == UNIT_MINUTE:
-            t = datetime.datetime(time.year, time.month, time.day, time.hour, 0, 0)
+            t = datetime(time.year, time.month, time.day, time.hour, 0, 0, tzinfo=zone)
         elif unit == UNIT_HOUR:
-            t = datetime.datetime(time.year, time.month, time.day, 0, 0, 0)
+            t = datetime(time.year, time.month, time.day, 0, 0, 0, tzinfo=zone)
         elif unit == UNIT_DAY:
-            t = datetime.datetime(time.year, time.month, time.day, 0, 0, 0)
+            t = datetime(time.year, time.month, time.day, 0, 0, 0, tzinfo=zone)
             return t
         if t == time:
             return t
         
         while t < time:
             if unit == UNIT_MINUTE:
-                t += datetime.timedelta(minutes = interval)
+                t += timedelta(minutes = interval)
             elif unit == UNIT_HOUR:
-                t += datetime.timedelta(hours = interval)
+                t += timedelta(hours = interval)
         return t
     
     def candlePrice(self, time, data):
+        n = len(data[0])
         o = data[0][0]
         c = data[-1][3]
         h = None
         l = None
         v = 0
         for d in data:
-            v += d[4]
+            if n > 4:
+                v += d[4]
             if h is None:
                 h = d[1]
                 l = d[2]
@@ -292,31 +267,48 @@ class MarketData:
                     h = d[1]
                 if d[2] < l:
                     l = d[2]
-        return [time, o, h, l, c, v]
-    
-    def resample(self, interval, unit):
-        current_time = None
-        table = self.df[['time', 'open', 'high', 'low', 'close', 'volume']].values.tolist()
+        if n > 4:
+            return [time, o, h, l, c, v]
+        else:
+            return [time, o, h, l, c]
+        
+    def resample(self, interval, unit, time_key=TIMEJST, timestamp_key=TIMESTAMP):
+        
+        time = list(self.df[time_key])
+        n = len(time)
+        oo = list(self.df[OPEN])
+        hh = list(self.df[HIGH])
+        ll = list(self.df[LOW])
+        cc = list(self.df[CLOSE])
+        if self.is_volume:
+            vv = list(self.df[VOLUME])
+            
+        data_list = None
         out = []
-        data = []
         times = []
-        for d in table:
-            t = pd.to_datetime(d[0])
-            round_t = self.roundTime(t, interval, unit)
-            values = d[1:6]
-            if current_time is None:
-                current_time = round_t
-                data = [values]
+        current_time = None
+        for i in range(n):
+            t = pd.to_datetime(time[i])
+            t_round = self.roundTime(t, interval, unit)
+            if self.is_volume:
+                values = [oo[i], hh[i], ll[i], cc[i], vv[i]]
             else:
-                if round_t == current_time:
-                    data.append(values)
+                values = [oo[i], hh[i], ll[i], cc[i]]
+            if current_time is None:
+                current_time = t_round
+                data_list = [values]
+            else:
+                if t_round == current_time:
+                    data_list.append(values)
                 else:
-                    dd = self.candlePrice(current_time, data)
-                    times.append(current_time)
-                    out.append(dd)
-                    current_time = round_t
-                    data = [values]  
-        df = pd.DataFrame(out, columns = COLUMNS, index = times)
-        p = Market(self.name, interval, unit, self.is_volume)
+                    new_data = self.candlePrice(current_time, data_list)
+                    data_list = [values]
+                    out.append(new_data)
+                    current_time = t_round
+                    times.append(t_round)  
+        df = pd.DataFrame(out, columns=[TIMEJST, OPEN, HIGH, LOW, CLOSE], index=times)
+        ts = [t.timestamp() for t in times]
+        df[TIMESTAMP] = ts
+        p = MarketData(self.name, interval, unit, self.is_volume)
         p.setDataFrame(df)
         return p

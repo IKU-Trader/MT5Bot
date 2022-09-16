@@ -9,18 +9,25 @@ import pandas as pd
 import numpy as np
 from datetime import datetime, timezone
 
-def df2dic(df: pd.DataFrame, is_numpy=True, time_key = 'time', convert_keys=None):
+def df2dic(df: pd.DataFrame, is_numpy=False, time_key='time', convert_keys=None):
     columns = df.columns
     dic = {}
     for column in columns:
         d = None
         if column.lower() == time_key.lower():
-            d = df[column].values
+            nptime = df[column].values
+            pytime = [npDateTime2pyDatetime(t) for t in nptime]
+            if is_numpy:
+                d = nptime
+            else:
+                d = pytime
         else:
             d = df[column].values.tolist()
             d = [float(v) for v in d]
-            if is_numpy:
-                d = np.array(d)
+        if is_numpy:
+            d = np.array(d)
+        else:
+            d = list(d)
         if convert_keys is None:
             key = column
         else:
@@ -145,6 +152,8 @@ def jst2utc(jst):
         utc.append(t.astimezone(timezone.utc))
     return utc
     
-    
+def npDateTime2pyDatetime(np_time):
+    py_time = datetime.fromtimestamp(np_time.astype(datetime) * 1e-9)
+    return py_time
 
     

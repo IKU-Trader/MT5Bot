@@ -75,6 +75,33 @@ class TechnicalAnalysis:
         lower = MathArray.subtractArray(inp, m)
         return (upper, lower)
     
+    @classmethod
+    def breakSignal(cls, dic, key, is_up, offset=1):
+        if offset < 0:
+            return None
+        level = dic[key]
+        oo = dic[OPEN]
+        hh = dic[HIGH]
+        ll = dic[LOW]
+        cc = dic[CLOSE]
+        n = len(cc)
+        signal = []
+        for i in range(n):
+            if i < offset:
+                signal.append(0)
+                continue
+            if is_up:
+                p = max(oo[i], cc[i])
+                t = p > level[i - offset]
+            else:
+                p = min(oo[i], cc[i])
+                t = p < level[i - offset]
+            if t:
+                signal.append(1)
+            else:
+                signal.append(0)
+        return signal
+    
 # -----
 def sequence(key: str, dic: dict, begin: int, end:int, params: dict):
     n = len(dic[OPEN])
@@ -96,27 +123,48 @@ def sequence(key: str, dic: dict, begin: int, end:int, params: dict):
         else:
             data = sliceDic(dic, begin, end)
         
+    array = analysis(data, key, params)    
+    if array is None:
+        return False
+    if key in dic.keys():
+        j = len(array) - (end - begin + 1)
+        original = dic[key]
+        original[begin: end + 1] = array[j:]
+    else:
+        dic[key] = array
+    return True
+
+def analysis(data:dict, key:str, params:dict):
+    if WINDOW in params.keys():
+        window = params[WINDOW]
+    if COEFF in params.keys():
+        coeff = params[COEFF]
+        
     if key == SMA:
         array = TechnicalAnalysis.sma(data[CLOSE], window)
     elif key == ATR:
         array, _ = TechnicalAnalysis.atr(data, window)
     elif key == ATR_BAND_UPPER or key == ATR_BAND_LOWER:
         k = params[COEFF]
-        upper, lower = TechnicalAnalysis.atrBand(data, k)
+        upper, lower = TechnicalAnalysis.atrBand(data, coeff)
         if key == ATR_BAND_UPPER:
             array = upper
         else:
             array = lower
+    elif key == ATR_BREAKUP_SIGNAL:
+        array = TechnicalAnalysis.breakSignal(data, ATR_BAND_UPPER, True)
+    elif key == ATR_BREAKDOWN_SIGNAL:
+        array = TechnicalAnalysis.breakSignal(data, ATR_BAND_LOWER, False)
     else:
-        return False
-    
-    j = len(array) - (end - begin + 1)
-    a = array[j:]
-    if key in dic.keys():
-        original = dic[key]
-        original[begin: end + 1] = a
-    else:
-        dic[key] = array
+        return None
+
+    return array
+
+# -----
+def isKeys(dic, keys):
+    for key in keys:
+        if not key in dic.keys():
+            return False
     return True
 
 def sma(key, dic, begin, end):
@@ -127,7 +175,15 @@ def atr(key, dic, begin, end):
     params = {WINDOW: 14}
     return sequence(key, dic, begin, end, params)
 
-    
 def atrband(key, dic, begin, end):
-    params = {WINDOW:14, COEFF: 0.5}
+    if not isKeys(dic, [ATR]):
+        return False
+    params ={WINDOW:14, COEFF: 1.0}
     return sequence(key, dic, begin, end, params)
+
+def atrbreak(key, dic, begin, end):
+    if not isKeys(dic, [ATR_BAND_LOWER, ATR_BAND_UPPER]):
+        return False
+    params = {WINDOW: 14}
+    return sequence(key, dic, begin, end, params)
+
