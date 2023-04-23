@@ -5,9 +5,6 @@ Created on Tue Mar 14 20:41:14 2023
 @author: IKU-Trader
 """
 import os
-import sys
-sys.path.append(os.path.join(os.path.dirname(__file__), '../Utilities'))
-
 import numpy as np
 import pandas as pd
 from dash import Dash, html, dcc, dash_table
@@ -17,9 +14,9 @@ from dash.dependencies import Input, Output, State
 import plotly.graph_objects as go
 from plotly.figure_factory import create_candlestick
 
-from py_mt5 import PyMT5
-from time_utils import TimeUtils
-from const import const
+from libs.py_mt5 import PyMT5
+from libs.time_utils import TimeUtils
+from libs.const import const
 
 INTERVAL_MSEC = 200
 TICKERS = ['DOWUSD', 'NASUSD', 'JPXJPY', 'XAUUSD', 'WTIUSD', 'USDJPY','EURJPY', 'GBPJPY', 'AUDJPY']

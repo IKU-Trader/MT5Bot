@@ -7,9 +7,9 @@ Created on Tue Nov 29 11:21:36 2022
 
 import pandas as pd
 import MetaTrader5 as mt5
-from mt5_const import mt5_const
-from const import const
-from time_utils import TimeUtils
+from .mt5_const import mt5_const
+from .const import const
+from .time_utils import TimeUtils
 from datetime import datetime
 
 class Order:

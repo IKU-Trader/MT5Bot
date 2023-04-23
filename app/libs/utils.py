@@ -9,8 +9,8 @@ import os
 import pandas as pd
 import numpy as np
 import glob
-from const import const
-from time_utils import TimeUtils
+from .const import const
+from .time_utils import TimeUtils
 
 class Utils:
 

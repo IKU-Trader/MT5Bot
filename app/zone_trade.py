@@ -7,23 +7,19 @@ Created on Fri Mar 31 15:31:39 2023
 
 import os
 import sys
-sys.path.append(os.path.join(os.path.dirname(__file__), '../Utilities'))
-sys.path.append(os.path.join(os.path.dirname(__file__), '../TechnicalAnalysis'))
-sys.path.append(os.path.join(os.path.dirname(__file__), '../CandlestickChart'))
-sys.path.append(os.path.join(os.path.dirname(__file__), '../MarketData'))
 
 import pandas as pd
 import numpy as np
 import matplotlib.pyplot as plt
 from datetime import timedelta
-from utils import Utils
-from time_utils import TimeUtils
-from data_buffer import ResampleDataBuffer
-from market_data import MarketData
-from candle_chart import CandleChart, BandPlot, makeFig, gridFig, Colors
-from technical_analysis import TA
-from ta_kit import TAKit
-from const import const
+
+from libs.utils import Utils
+from libs.time_utils import TimeUtils
+from libs.data_buffer import ResampleDataBuffer
+from market_data import ClickSecData
+from libs.candle_chart import CandleChart, BandPlot, makeFig, gridFig, Colors
+from libs.technical_analysis import TA
+from libs.const import const
 
 def minmax(array):
     a = np.array(array, dtype=float)
@@ -97,7 +93,8 @@ def displayChart(ticker, data: ResampleDataBuffer, years, months, from_hour, to_
 
 def main():
     ticker = 'GBPJPY'
-    data = MarketData.fxData(ticker, TAKit.basic(), [2022], np.arange(1, 13), 5)
+    click_sec = ClickSecData()
+    data = click_sec.fxData(ticker, 2022, 10, 2023, 1, 5)
     dic = data.dic
     #print(dic['H4'][1000:1050])
     print(dic.keys())

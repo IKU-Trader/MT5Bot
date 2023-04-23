@@ -6,8 +6,6 @@ Created on Sun Dec  4 22:02:43 2022
 """
 
 import os
-import sys
-sys.path.append(os.path.join(os.path.dirname(__file__), '../Utilities'))
 
 import numpy as np
 import matplotlib.pyplot as plt
@@ -18,9 +16,10 @@ from matplotlib.patches import Rectangle
 from datetime import datetime, timedelta
 import matplotlib.dates as mdates
 import matplotlib.gridspec as gridspec
-from utils import Utils
-from time_utils import TimeUtils
-from const import const
+
+from .utils import Utils
+from .time_utils import TimeUtils
+from .const import const
 
 
 

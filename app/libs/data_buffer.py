@@ -6,20 +6,17 @@ Created on Sun Dec  4 22:37:16 2022
 """
 
 import os
-import sys
-sys.path.append(os.path.join(os.path.dirname(__file__), '../TechnicalAnalysis'))
-
 import pandas as pd
 import numpy as np
 import copy
 from datetime import datetime, timedelta
-from const import const
-from time_utils import TimeUtils
+from .const import const
+from .time_utils import TimeUtils
 
-from utils import Utils
-from converter import Converter
-from technical_analysis import TA
-from math_array import MathArray
+from .utils import Utils
+from .converter import Converter
+from .technical_analysis import TA
+from .math_array import MathArray
     
 # -----
 

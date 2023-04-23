@@ -5,10 +5,8 @@ Created on Sun Apr  2 17:44:54 2023
 @author: IKU-Trader
 """
 
-
 from datetime import datetime, timedelta
-from const import const
-
+from .const import const
 
 class Converter:
     
