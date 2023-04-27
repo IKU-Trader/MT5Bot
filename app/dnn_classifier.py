@@ -73,10 +73,15 @@ def learn(model, scaler, data: pd.DataFrame, features, objective):
     
 def evaluate(model, scaler, data: pd.DataFrame, features, objective):
     scaled_x = scaler.transform(data[features])
-    predicted = model.predict(scaled_x)    
+    predicted = model.predict(scaled_x)
     plt.scatter(data[objective], predicted)
     plt.xlabel('Actual')
     plt.ylabel('Predicted')
+    
+    data['prediction'] = np.where(predicted > 0, 1, -1)
+    data['profit'] = data['prediction'] * data['return']
+    data[['return', 'profit']].cumsum().apply(np.exp).plot(figsize=(10, 6))
+    
     
 def main():
     mt5_data = MT5Data()
