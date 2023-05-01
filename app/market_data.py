@@ -7,7 +7,8 @@ Created on Thu Mar 30 15:35:02 2023
 
 import os
 import numpy as np
-import pandas as pd
+import polars as pl
+from polars import DataFrame
 from datetime import datetime
 
 from libs.utils import Utils
@@ -132,14 +133,16 @@ class MT5Data:
         for path in file_list:
             dir_path, filename = os.path.split(path)
             if filename.find(ticker_symbol) >= 0 and filename.find(timeframe) >= 0:
-                df = pd.read_csv(path, delimiter='\t')
+                df = pl.read_csv(path, separator='\t')
                 return self.parse(df)
             
     def parse(self, df):
         time_str = df['<DATE>'] + ' ' + df['<TIME>']
-        df.index = TimeUtils.str2pytimeArray(time_str, TimeUtils.TIMEZONE_TOKYO, form='%Y.%m.%d %H:%M:%S')
-        df = df.rename(columns={'<OPEN>': const.OPEN, '<HIGH>': const.HIGH, '<LOW>': const.LOW, '<CLOSE>': const.CLOSE})
-        return df[[const.OPEN, const.HIGH, const.LOW, const.CLOSE]]
+        time = TimeUtils.str2pytimeArray(time_str, TimeUtils.TIMEZONE_TOKYO, form='%Y.%m.%d %H:%M:%S')
+        d = {const.TIME: time, const.OPEN: df["<OPEN>"], const.HIGH: df["<HIGH>"], const.LOW: df['<LOW>'], const.CLOSE: df['<CLOSE>']}
+        out = pl.DataFrame(d)
+        print(out.head())
+        return out
         
     
 if __name__ == '__main__':

@@ -5,7 +5,8 @@ Created on Sat Apr 22 21:58:04 2023
 @author: IKU-Trader
 """
 import numpy as np
-import pandas as pd
+import polars as pl
+from polars import DataFrame
 import matplotlib.pyplot as plt
 
 import tensorflow as tf
@@ -20,32 +21,33 @@ from libs.const import const
 
 FEATURES = []
 
-def split(df: pd.DataFrame, rate=0.8):
+def split(df: DataFrame, rate=0.8):
     n = int(len(df) * rate)
-    df_train = df.iloc[:n, :]
-    df_test = df.iloc[n:, :]
+    df_train = df[:n, :]
+    df_test = df[n:, :]
     return df_train, df_test
     
-def make_features(df: pd.DataFrame, lags=5, should_dropna=True):
-    data = pd.DataFrame({'price': df[const.CLOSE]})
-    data[const.TIME] = df.index   
-    data['return'] = np.log(data['price'] / data['price'].shift(1))
-    data['direction'] = np.where(data['return'] > 0, 1, 0)
+def make_features(df: DataFrame, lags=5, should_dropna=True):
+    data = DataFrame({const.TIME: df[const.TIME], 'price': df[const.CLOSE]})
+    ret = np.log(data['price'] / data['price'].shift(1))
+    direction = np.where(ret > 0, 1, 0)
+    data = data.with_columns(pl.Series(name='return', values=ret))
+    data = data.with_columns(pl.Series(name='direction', values=direction))    
     features = []
     for lag in range(lags):
         name = 'lag_' + str(lag)
-        data[name] = data['return'].shift(lag)
+        data = data.with_columns(data['return'].shift(lag).alias(name))
         features.append(name)
-    data['momentum'] = data['return'].rolling(5).mean().shift(1)
-    data['volatility'] = data['return'].rolling(5).std().shift(1)
-    data['distance'] = (data['price'] - data['price'].rolling(50).mean()).shift(1)
+    data = data.with_columns(data['return'].rolling_mean(5).shift(1).alias('momentum'))
+    data = data.with_columns(data['return'].rolling_std(5).shift(1).alias('volatility'))
+    data = data.with_columns( (data['price'] - data['price'].rolling_mean(50).shift(1)).alias('distance'))
     if should_dropna:
-        data = data.dropna()
+        data = data.drop_nulls()
     features += ['momentum', 'volatility', 'distance']
     objective = 'direction'
     return (data, features, objective)
     
-def create_scaler(df: pd.DataFrame, features):
+def create_scaler(df: DataFrame, features):
     scaler = StandardScaler()
     scaler.fit(df[features])
     return scaler
@@ -62,30 +64,44 @@ def create_model(input_dim: int):
     print(model.summary())
     return model
 
-def learn(model, scaler, data: pd.DataFrame, features, objective):
+def learn(model, scaler, data: DataFrame, features, objective):
     train_x = scaler.transform(data[features])
     model.fit(x=train_x,
-              y=np.array(data[objective].values),
+              y=np.array(data[objective]),
               epochs=50,
               verbose=True,
               validation_split=0.2,
               shuffle=False)
     
-def evaluate(model, scaler, data: pd.DataFrame, features, objective):
-    scaled_x = scaler.transform(data[features])
+def evaluate(ticker, model, scaler, df: DataFrame, features, objective):
+    scaled_x = scaler.transform(df[features])
     predicted = model.predict(scaled_x)
-    plt.scatter(data[objective], predicted)
+    plt.scatter(df[objective], predicted)
     plt.xlabel('Actual')
     plt.ylabel('Predicted')
-    
-    data['prediction'] = np.where(predicted > 0, 1, -1)
-    data['profit'] = data['prediction'] * data['return']
-    data[['return', 'profit']].cumsum().apply(np.exp).plot(figsize=(10, 6))
+    plt.show()
     
     
-def main():
+    prediction = np.where(predicted > 0, 1, -1)
+    df = df.with_columns(pl.Series(name='prediction', values=prediction))
+    profit = df['prediction'].to_numpy() * df['return'].to_numpy()
+    df = df.with_columns(pl.Series(name='profit', values=profit))
+    n = len(df)
+    
+    plt.plot(df[const.TIME], df['price'])
+    plt.show()
+    
+    plt.plot(df[const.TIME], df['profit'])
+    plt.show()
+    
+    
+    #df['price'].plot(figsize=(10, 6))
+    #df[['return', 'profit']].cumsum().apply(np.exp).plot(figsize=(10, 6), title=ticker)
+    
+    
+def main(ticker):
     mt5_data = MT5Data()
-    df = mt5_data.importFromCsv('GBPJPY', 'M5')
+    df = mt5_data.importFromCsv(ticker, 'M5')
     df_train, df_test = split(df)
     (df_train, features, objective) = make_features(df_train)
     (df_test, features, objective) = make_features(df_test)
@@ -95,9 +111,12 @@ def main():
     
     scaler = create_scaler(df_train, features)
     learn(model, scaler, df_train, features, objective)
-    evaluate(model, scaler, df_test, features, objective)
+    evaluate(ticker, model, scaler, df_test, features, objective)
 
     pass
 
 if __name__ == '__main__':
-    main()
+    main('GBPAUD')
+    #main('JPXJPY')
+    #main('NASUSD')
+    #main('XAUUSD')
