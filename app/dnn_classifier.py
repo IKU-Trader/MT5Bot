@@ -82,9 +82,12 @@ def evaluate(ticker, model, scaler, df: DataFrame, features, objective):
     plt.show()
     
     
-    prediction = np.where(predicted > 0, 1, -1)
+    prediction = np.where(predicted > 0, 1, -1).reshape(-1)
     df = df.with_columns(pl.Series(name='prediction', values=prediction))
-    profit = df['prediction'].to_numpy() * df['return'].to_numpy()
+    
+    ret = np.array(df['return'].to_list())
+    print(ret.shape, prediction.shape)
+    profit = np.multiply(prediction, ret)
     df = df.with_columns(pl.Series(name='profit', values=profit))
     n = len(df)
     
