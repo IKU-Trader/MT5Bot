@@ -70,10 +70,10 @@ class ClickSecData:
         f.close()
         return tohlc
     
-    def str2time_gold(self, s: str):
+    def str2timeGold(self, s: str):
         return TimeUtils.pyTime(int(s[0:4]), int(s[4:6]), int(s[6:8]), int(s[8:10]), int(s[10:12]), 0, TimeUtils.TIMEZONE_TOKYO)
 
-    def str2time_fx(self, s: str):
+    def str2timeFx(self, s: str):
         form = '%Y/%m/%d %H:%M:%S'
         t = datetime.strptime(s, form)
         t = t.astimezone(TimeUtils.TIMEZONE_TOKYO)
@@ -97,7 +97,7 @@ class ClickSecData:
                     l = Utils.fileList(path, '*.csv')
                     if len(l) > 0:
                         files += l
-        candles = self.getCandles(files, self.str2time_gold)
+        candles = self.getCandles(files, self.str2timeGold)
         tohlc = candles2tohlc(candles)
         return candles, tohlc
     
@@ -119,13 +119,13 @@ class ClickSecData:
             if month > 12:
                 year += 1
                 month = 1
-        candles = self.getCandles(files, self.str2time_fx)
+        candles = self.getCandles(files, self.str2timeFx)
         tohlc = candles2tohlc(candles)
         return candles, tohlc
     
 class MT5Data:
-    def __init__(self):
-        self.home_dir = '../market_data/mt5/gemforex'
+    def __init__(self, home_dir):
+        self.home_dir = home_dir
         self.tickers = ['GBPJPY']
         
     def importFromCsv(self, ticker_symbol: str, timeframe: str):
