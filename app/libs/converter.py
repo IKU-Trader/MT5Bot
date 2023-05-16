@@ -9,6 +9,8 @@ import polars as pl
 from polars import DataFrame
 from datetime import datetime, timedelta
 from .const import const
+from .time_utils import TimeUtils
+
 
 class Converter:
     
@@ -151,8 +153,17 @@ class Converter:
         elif unit == const.UNIT_HOUR:
             t = datetime(time.year, time.month, time.day, 0, 0, 0, tzinfo=zone)
         elif unit == const.UNIT_DAY:
-            t = datetime(time.year, time.month, time.day, 0, 0, 0, tzinfo=zone)
-            return t
+            if TimeUtils.isSummerTime(time):
+                hour = 6
+            else:
+                hour = 7
+            if time.hour < hour:    
+                return datetime(time.year, time.month, time.day, hour, 0, 0, tzinfo=zone)
+            else:
+                t = datetime(time.year, time.month, time.day, hour, 0, 0, tzinfo=zone)
+                t += timedelta(days=1)
+                return t
+                
         if t == time:
             return t
         while t < time:

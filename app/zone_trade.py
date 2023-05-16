@@ -45,6 +45,7 @@ def plotChart(ticker: str, df: DataFrame):
     chart1.drawLine(time, df['SMA60'], color='blue')
     chart1.drawLine(time, df['H2_SMA20'], color='yellow', linewidth=2.0)
     chart1.drawLine(time, df['H4_SMA20'], color='orange', linewidth=2.0)
+    chart1.drawLine(time, df['D1_SMA20'], color='orange', linewidth=4.0)
     chart1.drawLine(time, df['BOLLINGER+'], color='gray', linewidth=0.5)
     chart1.drawLine(time, df['BOLLINGER-'], color='gray', linewidth=0.5)
     chart1.drawMarkers(time, df[const.LOW], -0.05, df['SIGNAL'], 1, '^', 'green', overlay=1, markersize=20)
@@ -103,7 +104,7 @@ def displayChart(ticker: str,
 
 def main():
     ticker = 'GBPJPY'
-    mt5 = MT5Data(r'C:\develop\git\github\IKU-Trader\MT5Bot\market_data\mt5\gemforex\M1')
+    mt5 = MT5Data(r'C:\Users\docs9\git\github\IKU-Trader\MT5Bot\market_data\mt5\gemforex\M1')
     df = mt5.importFromCsv('GBPJPY', 'M1')
     #print(dic['H4'][1000:1050])
     print('data size:', len(df))
@@ -112,7 +113,7 @@ def main():
     tohlcv = Converter.df2dic(df)
     buffer = ResampleDataBuffer(tohlcv, TA.full_kit(), 5)
     
-    displayChart(ticker, buffer.dic, 2023, 4, 2023, 5, 7, 2)
+    displayChart(ticker, buffer.dic, 2023, 1, 2023, 5, 7, 2)
        
 if __name__ == '__main__':
     main()

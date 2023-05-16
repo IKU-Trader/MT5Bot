@@ -115,7 +115,8 @@ class TA:
                     [TA.MA_TREND_BAND, trend_params, 'MA_TREND'],
                     [TA.PATTERN_MATCH, patterns, 'SIGNAL'],
                     [TA.UPPER_TIMEFRAME, {TA.SOURCE: const.CLOSE, TA.TIMEFRAME: 'H2', TA.WINDOW: 20}, 'H2_SMA20'],
-                    [TA.UPPER_TIMEFRAME, {TA.SOURCE: const.CLOSE, TA.TIMEFRAME: 'H4', TA.WINDOW: 20}, 'H4_SMA20']
+                    [TA.UPPER_TIMEFRAME, {TA.SOURCE: const.CLOSE, TA.TIMEFRAME: 'H4', TA.WINDOW: 20}, 'H4_SMA20'],
+                    [TA.UPPER_TIMEFRAME, {TA.SOURCE: const.CLOSE, TA.TIMEFRAME: 'D1', TA.WINDOW: 20}, 'D1_SMA20']
                 ]
         return params
     
