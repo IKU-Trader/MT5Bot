@@ -138,7 +138,7 @@ class MT5Data:
             
     def parse(self, df):
         time_str = df['<DATE>'] + ' ' + df['<TIME>']
-        time = TimeUtils.str2pytimeArray(time_str, TimeUtils.TIMEZONE_TOKYO, form='%Y.%m.%d %H:%M:%S')
+        time = TimeUtils.str2pytimeArray(time_str, form='%Y.%m.%d %H:%M:%S', timezone_str='+0900')
         d = {const.TIME: time, const.OPEN: df["<OPEN>"], const.HIGH: df["<HIGH>"], const.LOW: df['<LOW>'], const.CLOSE: df['<CLOSE>']}
         out = pl.DataFrame(d)
         print(out.head())

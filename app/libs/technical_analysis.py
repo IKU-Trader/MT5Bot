@@ -7,6 +7,8 @@ Created on Wed Jan  4 18:19:54 2023
 
 import os
 import numpy as np
+import polars as pl
+from polars import DataFrame
 import math
 from .utils import Utils
 from .math_array import MathArray
@@ -79,8 +81,6 @@ class TA:
  
     @staticmethod
     def basic_kit():
-
-
         params = [
                     [TA.SMA, {TA.WINDOW: 5}, 'SMA5'],
                     [TA.SMA, {TA.WINDOW: 20}, 'SMA20'],
@@ -357,15 +357,11 @@ class TA:
     @staticmethod
     def upperTimeframe(dic: dict, refkey: str, time_symbol: str, ma_window: int=0):
         time = dic[const.TIME]
-        arrays = [time, dic[const.OPEN], dic[const.HIGH], dic[const.LOW], dic[const.CLOSE]]
+        #arrays = [time, dic[const.OPEN], dic[const.HIGH], dic[const.LOW], dic[const.CLOSE]]
         value, unit = const.timeSymbol2elements(time_symbol)
-        tohlcv_arrays, candles = Converter.resample(arrays, value, unit)    
-        sample_time = tohlcv_arrays[0]
-        try:
-            index = [const.TIME, const.OPEN, const.HIGH, const.LOW, const.CLOSE].index(refkey)
-        except:
-            raise Exception('Bad source key' + refkey)
-        sample_data = tohlcv_arrays[index]
+        tohlcv_dic, candles, tmp_candles = Converter.resample(dic, value, unit)    
+        sample_time = tohlcv_dic[const.TIME]
+        sample_data = tohlcv_dic[refkey]
         if ma_window > 0:
             sample_data = TA.sma(sample_data, ma_window)
         data = nans(len(time))
@@ -420,7 +416,7 @@ class TA:
         return True
     
     @staticmethod
-    def indicator(data:dict, key:str, params:dict, name:str=None, should_set=True):
+    def indicator(data: dict, key:str, params:dict, name:str=None, should_set=True):
         op = data[const.OPEN]
         hi = data[const.HIGH]
         lo = data[const.LOW]

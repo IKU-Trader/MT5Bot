@@ -5,10 +5,41 @@ Created on Sun Apr  2 17:44:54 2023
 @author: IKU-Trader
 """
 
+import polars as pl
+from polars import DataFrame
 from datetime import datetime, timedelta
 from .const import const
 
 class Converter:
+    
+    @staticmethod
+    def df2Candles(df: DataFrame):
+        df2 = df[[const.OPEN, const.HIGH, const.LOW, const.CLOSE]]
+        return df2.to_list()
+    
+    @staticmethod
+    def df2dic(df: DataFrame) ->dict:
+        t = df[const.TIME].to_list()
+        o = df[const.OPEN].to_numpy()
+        h = df[const.HIGH].to_numpy()
+        l = df[const.LOW].to_numpy()
+        c = df[const.CLOSE].to_numpy()
+        dic = {const.TIME: t, const.OPEN: o, const.HIGH: h, const.LOW: l, const.CLOSE: c}
+        if const.VOLUME in df.columns:
+            v = df[const.VOLUME].to_numpy()
+            dic[const.VOUME] = v
+        return dic
+    
+    @staticmethod
+    def tohlcv2Candles(tohlcv):
+        op = tohlcv[1]
+        hi = tohlcv[2]
+        lo = tohlcv[3]
+        cl = tohlcv[4]
+        candles = []
+        for o, h, l, c in zip(op, hi, lo, cl):
+            candles.append([o, h, l, c])
+        return candles
     
     @staticmethod
     def tohlcvArrays2dic(tohlcv: list, is_last_invalid):
@@ -51,14 +82,18 @@ class Converter:
         return out
 
     @staticmethod
-    def candles2Arrays(candles: list):
+    def candles2dic(candles: list):
         n = len(candles)
         m = len(candles[0])
         arrays = []
         for i in range(m):
             array = [candles[j][i] for j in range(n)]
             arrays.append(array)
-        return arrays
+            
+        dic = {const.TIME: arrays[0], const.OPEN: arrays[1], const.HIGH: arrays[2], const.LOW: arrays[3], const.CLOSE: arrays[4]}
+        if m > 5:
+            dic[const.VOLUME] = arrays[5]
+        return dic
 
     @staticmethod
     def dic2Candles(dic: dict):
@@ -77,19 +112,19 @@ class Converter:
     
     # tohlcv: tohlcv arrays
     @staticmethod
-    def resample(tohlcv: list, interval: int, unit: const.TimeUnit):        
-        time = tohlcv[0]
+    def resample(tohlcv: dict, interval: int, unit: const.TimeUnit):        
+        time = tohlcv[const.TIME]
         n = len(time)
-        op = tohlcv[1]
-        hi = tohlcv[2]
-        lo = tohlcv[3]
-        cl = tohlcv[4]
-        if len(tohlcv) > 5:
-            vo = tohlcv[5]
+        op = tohlcv[const.OPEN]
+        hi = tohlcv[const.HIGH]
+        lo = tohlcv[const.LOW]
+        cl = tohlcv[const.CLOSE]
+        if const.VOLUME in tohlcv.keys():
+            vo = tohlcv[const.TIME]
             is_volume = True
         else:
             is_volume = False
-        data_list = []
+        tmp_candles = []
         candles = []
         for i in range(n):
             if is_volume:
@@ -98,15 +133,15 @@ class Converter:
                 values = [time[i], op[i], hi[i], lo[i], cl[i]]
             t_round = Converter.roundTime(time[i], interval, unit)
             if time[i] == t_round:
-                data_list.append(values)
-                candle = Converter.candlePrice(time[i], data_list)
+                tmp_candles.append(values)
+                candle = Converter.candlePrice(time[i], tmp_candles)
                 candles.append(candle)
-                data_list = []
+                tmp_candles = []
             elif time[i] < t_round:
-                data_list.append(values)
+                tmp_candles.append(values)
             elif time[i] > t_round:
-                data_list = []
-        return Converter.candles2Arrays(candles), data_list
+                tmp_candles = []
+        return Converter.candles2dic(candles), candles, tmp_candles
     
     @staticmethod
     def roundTime(time: datetime, interval: int, unit: const.TimeUnit):

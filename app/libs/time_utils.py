@@ -22,16 +22,18 @@ class TimeUtils:
         return out
        
     @staticmethod
-    def str2pytimeArray(time_str_array: list, tzinfo, form='%Y-%m-%d %H:%M:%S'):
+    def str2pytimeArray(time_str_array: list, form='%Y-%m-%d %H:%M:%S', timezone_str=None):
         out = []
-        for s in time_str_array:
-            i = s.find('+')
-            if i > 0:
-                s = s[:i]
-            t = datetime.strptime(s, form)
-            t = TimeUtils.pyTime(t.year, t.month, t.day, t.hour, t.minute, t.second, tzinfo)
+        if timezone_str is None:
+            zone = ''
+        else:
+            zone = ' ' + timezone_str
+            form += ' %z'
+        for time_str in time_str_array:            
+            t = datetime.strptime(time_str + zone, form)
             out.append(t)
         return out
+    
     
     @staticmethod
     def str2pytime(time_str: str, tzinfo, form='%Y-%m-%d %H:%M:%S'):

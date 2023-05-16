@@ -21,8 +21,6 @@ from .utils import Utils
 from .time_utils import TimeUtils
 from .const import const
 
-
-
 class colors():    
     @property
     def light_green(self):

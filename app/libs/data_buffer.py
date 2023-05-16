@@ -6,7 +6,8 @@ Created on Sun Dec  4 22:37:16 2022
 """
 
 import os
-import pandas as pd
+import polars as pl
+from polars import DataFrame
 import numpy as np
 import copy
 from datetime import datetime, timedelta
@@ -22,18 +23,19 @@ from .math_array import MathArray
 
 class DataBuffer:
     # tohlcv: arrays ( time array, open array, ...)
-    def __init__(self, tohlcv: list, ta_params: list, is_last_invalid=True):
+    def __init__(self, dic, candles, ta_params: list, is_last_invalid=True):
         self.ta_params = ta_params
-        dic, candle = Converter.tohlcvArrays2dic(tohlcv, is_last_invalid)        
-        self.addIndicators(dic)
         self.dic = dic
-        self.invalid_candle = candle
+        if is_last_invalid:
+            self.candles = candles[:-1]
+            self.invalid_candles = candles[-1]
+        else:
+            self.candles = candles
+            self.invalid_candles = None
+        self.addIndicators(dic)
                                 
-    def tohlcvDic(self):
-        return self.dic
-    
     def candles(self):
-        return Converter.dic2Candles(self.dic)
+        return self.candles
     
     def tohlcvArrays(self):
         return Utils.dic2Arrays(self.dic)
@@ -55,12 +57,10 @@ class DataBuffer:
         else:
             return None
        
-    # dic: tohlcv+ array dict
-    def addIndicators(self, dic: dict):
+    def addIndicators(self, data: dict):
         for ta_param in self.ta_params:
             method, param, name = ta_param
-            TA.indicator(dic, method, param, name=name)
-        return dic
+            TA.indicator(data, method, param, name=name)
 
     def updateSeqIndicator(self, dic: dict, begin: int, end: int):
         for ta_param in self.ta_params:
@@ -123,12 +123,11 @@ class DataBuffer:
 # -----
 
 class ResampleDataBuffer(DataBuffer):
-    # tohlcv: arrays ( time array, open array, ...)
-    def __init__(self, tohlcv: list, ta_params: list, interval_minutes: int):
+    def __init__(self, tohlcv, ta_params: list, interval_minutes: int):
         if interval_minutes > 60:
             raise Exception('Bad interval_minutes')
-        tohlcv_arrays, tmp_candles = Converter.resample(tohlcv, interval_minutes, const.UNIT_MINUTE)
-        super().__init__(tohlcv_arrays, ta_params, False)
+        tohlcv_dic, candles, tmp_candles = Converter.resample(tohlcv, interval_minutes, const.UNIT_MINUTE)
+        super().__init__(tohlcv_dic, candles, ta_params, False)
         self.interval_minutes = interval_minutes
         self.tmp_candles = tmp_candles
             

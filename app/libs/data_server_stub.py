@@ -5,10 +5,13 @@ Created on Tue Jan  3 16:26:45 2023
 @author: IKU-Trader
 """
 import os
-import pandas as pd
+import numpy as np
+import polars as pl
+from polars import DataFrame
 import numpy as np
 import glob
 import pytz
+from const import const
 from time_utils import TimeUtils
 
 def fileList(dir_path, extension):
@@ -55,15 +58,15 @@ class DataServerStub:
     def importFiles(self, dir_path, tzinfo):
         tohlcv = None  
         for file in fileList(dir_path, 'csv'):
-            df = pd.read_csv(file)
-            data = self.toTohlcv(df.values)
+            df = pl.read_csv(file)
+            data = self.toTohlcv(df)
             tohlcv = self.merge(tohlcv, data)
         tohlcv = self.parseTime(tohlcv, tzinfo)
         self.tohlcv = self.resample(tohlcv, self.interval, self.time_unit)
         
     def importFile(self, file_path, tzinfo):
-        df = pd.read_csv(file_path)
-        tohlcv = self.toTohlcv(df.values)
+        df = pl.read_csv(file_path)
+        tohlcv = self.toTohlcv(df)
         tohlcv = self.parseTime(tohlcv, tzinfo)
         self.tohlcv = tohlcv
         
@@ -181,11 +184,13 @@ class DataServerStub:
             return []
         return self.toCandles(tohlcv)
 
-    def toTohlcv(self, candles:[]):
-        n = len(candles)
-        m = len(candles[0])
-        arrays = []
-        for i in range(m):
-            array = [candles[j][i] for j in range(n)]
-            arrays.append(array)
-        return arrays
+    def toTohlcv(self, df: DataFrame):
+        time = df[const.TIME].to_list()
+        op = df[const.OPEN].to_numpy()
+        hi = df[const.HIGH].to_numpy()
+        lo = df[const.LOW].to_numpy()
+        cl = df[const.CLOSE].to_numpy()
+        out = [time, op, hi, lo, cl]
+        if const.VOLUME in df.columns:
+            out.append(df[const.VOLUME].to_numpy())
+        return out

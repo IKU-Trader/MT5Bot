@@ -5,7 +5,8 @@ Created on Tue Nov 29 11:21:36 2022
 @author: IKU-Trader
 """
 
-import pandas as pd
+import polars as pl
+from polars import DataFrame
 import MetaTrader5 as mt5
 from .mt5_const import mt5_const
 from .const import const
@@ -285,10 +286,17 @@ class PyMT5(object):
         if info is None:
             print("Retreiving account information failed")
             return None
-        
-        data = [info.balance, info.credit, info.profit, info.equity, info.margin, info.margin_free, info.margin_level, info.margin_so_call, info.currency]
-        columns = ['balance', 'credit', 'profit', 'equity', 'margin', 'margin_free', 'margin_level', 'margin_so_call', 'currency']         
-        return pd.DataFrame(data=[data], columns=columns)
+
+        dic = {'balance': info.balance, 
+               'credit': info.credit,
+               'profit': info.profit,
+               'equity': info.equity,
+               'margin': info.margin,
+               'margin_free': info.margin_free, 
+               'margin_level': info.margin_level, 
+               'margin_so_call':info.margin_so_call, 
+               'currency':info.currency}
+        return DataFrame(dic)
 
     def checkSymbol(self, symbol: str):
         info = mt5.symbol_info(symbol)
@@ -323,8 +331,8 @@ class PyMT5(object):
                 sell_positions.append(values)
                 
         columns = ['type', 'time', 'symbol', 'volume', 'ticket', 'profit', 'stoploss', 'takeprofit']    
-        df_buy = pd.DataFrame(data=buy_positions, columns=columns)
-        df_sell = pd.DataFrame(data=sell_positions, columns=columns)
+        df_buy = DataFrame(buy_positions, columns=columns)
+        df_sell = DataFrame(sell_positions, columns=columns)
         return (df_buy, df_sell)
     
     def position(self, ticket):

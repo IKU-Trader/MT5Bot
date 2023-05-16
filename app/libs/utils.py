@@ -6,7 +6,8 @@ Created on Sat Jan 22 20:24:47 2022
 """
 
 import os
-import pandas as pd
+import polars as pl
+from polars import DataFrame
 import numpy as np
 import glob
 from .const import const
@@ -42,7 +43,7 @@ class Utils:
         
         
     @staticmethod
-    def df2dic(df: pd.DataFrame, is_numpy=False, time_key='time', convert_keys=None):
+    def df2dic(df: DataFrame, is_numpy=False, time_key='time', convert_keys=None):
         columns = df.columns
         dic = {}
         for column in columns:
@@ -87,7 +88,7 @@ class Utils:
             for j in range(len(values)):
                 d.append(values[j][i])
             out.append(d)
-        df = pd.DataFrame(data=out, columns = keys)
+        df = DataFrame(out, columns=keys)
         return df
 
     @staticmethod
