@@ -157,7 +157,7 @@ class Converter:
                 hour = 6
             else:
                 hour = 7
-            if time.hour < hour:    
+            if time.hour <= hour:    
                 return datetime(time.year, time.month, time.day, hour, 0, 0, tzinfo=zone)
             else:
                 t = datetime(time.year, time.month, time.day, hour, 0, 0, tzinfo=zone)

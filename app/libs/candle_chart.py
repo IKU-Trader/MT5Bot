@@ -194,11 +194,12 @@ class CandleChart:
         self.title = title
         self.comment = comment
         self.write_time_range = write_time_range
+        self.comment_done = False
         self.ax.grid(True)
         self.ax.xaxis_date()
         self.ax.xaxis.set_major_formatter(mdates.DateFormatter(date_format))
         
-    def drawCandle(self, Time, Open, High, Low, Close, bar_width=None, tick_minutes=60, xlabel=False):
+    def drawCandle(self, Time, Open, High, Low, Close, bar_width=None, tick_minutes=60, xlabel=False, ymargin=0.1):
         self.time = Time
         vmin = min(Low)
         vmax = max(High)
@@ -218,12 +219,12 @@ class CandleChart:
             obj = CandleGraphic(t, value, self.box_width)
             obj.setObject(self.ax)
             self.graphic_objects.append(obj)
-        dw = (vmax - vmin) * 0.1
+        dw = (vmax - vmin) * ymargin
         self.ylimit([vmin - dw, vmax + dw])
         tick = self.ticks(Time[0], Time[-1], tick_minutes)        
         self.ax.set_xticks(tick)
         self.ax.set_xlim(t0, t1)
-        self.drawComments()
+        self.drawComments(self.write_time_range)
         if xlabel == False:
             self.ax.tick_params(labelbottom=False, bottom=False)
         
@@ -235,7 +236,7 @@ class CandleChart:
             self.ax.set_ylim(ylim[0], ylim[1])
         self.ax.set_xlim(tfloat[0], tfloat[-1])
         self.ax.grid(True)
-        self.drawComments()
+        self.drawComments(False)
         if xlabel == False:
             self.ax.tick_params(labelbottom=False, bottom=False)
         
@@ -269,16 +270,20 @@ class CandleChart:
         t0 = awarePyTime2Float(time[0])
         t1 = awarePyTime2Float(time[-1])
         self.ax.set_xlim(t0, t1)
-        self.drawComments()
+        self.drawComments(False)
         if xlabel == False:
             self.ax.tick_params(labelbottom=False, bottom=False)
         
-    def drawComments(self):
+    def drawComments(self, write_time_range):
+        if self.comment_done:
+            return
+        else:
+            self.comment_done = True
         x = self.time[0]
         s = ''
         if self.comment is not None:
             s +=  self.comment
-        if self.write_time_range:
+        if write_time_range:
             form = '%Y-%m-%d %H:%M'
             s += '  (' + self.time[0].strftime(form)
             s += ' ... ' + self.time[-1].strftime(form) + ')'

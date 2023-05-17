@@ -37,21 +37,24 @@ def minmax(array):
     
 def plotChart(ticker: str, df: DataFrame):
     time = df[const.TIME]
-    fig, axes = gridFig([8, 5, 2, 2, 1], (14, 10))
+    fig, axes = gridFig([8, 4, 2, 2, 1], (14, 15))
     chart1 = CandleChart(fig, axes[0], title=ticker, write_time_range=True)
-    chart1.drawCandle(time, df[const.OPEN], df[const.HIGH], df[const.LOW], df[const.CLOSE])
+    chart1.drawCandle(time, df[const.OPEN], df[const.HIGH], df[const.LOW], df[const.CLOSE], ymargin=0.5)
     chart1.drawLine(time, df['SMA5'])
     chart1.drawLine(time, df['SMA20'], color='green')
     chart1.drawLine(time, df['SMA60'], color='blue')
     chart1.drawLine(time, df['H2_SMA20'], color='yellow', linewidth=2.0)
     chart1.drawLine(time, df['H4_SMA20'], color='orange', linewidth=2.0)
-    chart1.drawLine(time, df['D1_SMA20'], color='orange', linewidth=4.0)
+    chart1.drawLine(time, df['D1_SMA5'], color='purple', linewidth=3.0)
     chart1.drawLine(time, df['BOLLINGER+'], color='gray', linewidth=0.5)
     chart1.drawLine(time, df['BOLLINGER-'], color='gray', linewidth=0.5)
     chart1.drawMarkers(time, df[const.LOW], -0.05, df['SIGNAL'], 1, '^', 'green', overlay=1, markersize=20)
     chart1.drawMarkers(time, df[const.LOW], -0.05, df['SIGNAL'], 2, '^', 'green', overlay=2, markersize=20)
     chart1.drawMarkers(time, df[const.HIGH], 50, df['SIGNAL'], -1, '^', 'red', overlay=1, markersize=20)
     chart1.drawMarkers(time, df[const.HIGH], 50, df['SIGNAL'], -2, '^', 'red', overlay=2, markersize=20)
+    
+    #chart2 = CandleChart(fig, axes[1], title=ticker, write_time_range=True)
+    #chart2.drawLine(time, df['D1_SMA5'], color='purple', linewidth=2.0)
     
     chart2 = CandleChart(fig, axes[1], comment='SLOPE')
     chart2.drawLine(time, df['SLOPE_SMA5'], color='red')
@@ -104,7 +107,7 @@ def displayChart(ticker: str,
 
 def main():
     ticker = 'GBPJPY'
-    mt5 = MT5Data(r'C:\Users\docs9\git\github\IKU-Trader\MT5Bot\market_data\mt5\gemforex\M1')
+    mt5 = MT5Data(r'..\market_data\mt5\gemforex\M1')
     df = mt5.importFromCsv('GBPJPY', 'M1')
     #print(dic['H4'][1000:1050])
     print('data size:', len(df))

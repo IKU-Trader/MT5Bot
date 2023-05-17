@@ -116,7 +116,7 @@ class TA:
                     [TA.PATTERN_MATCH, patterns, 'SIGNAL'],
                     [TA.UPPER_TIMEFRAME, {TA.SOURCE: const.CLOSE, TA.TIMEFRAME: 'H2', TA.WINDOW: 20}, 'H2_SMA20'],
                     [TA.UPPER_TIMEFRAME, {TA.SOURCE: const.CLOSE, TA.TIMEFRAME: 'H4', TA.WINDOW: 20}, 'H4_SMA20'],
-                    [TA.UPPER_TIMEFRAME, {TA.SOURCE: const.CLOSE, TA.TIMEFRAME: 'D1', TA.WINDOW: 20}, 'D1_SMA20']
+                    [TA.UPPER_TIMEFRAME, {TA.SOURCE: const.CLOSE, TA.TIMEFRAME: 'D1', TA.WINDOW: 5}, 'D1_SMA5']
                 ]
         return params
     
