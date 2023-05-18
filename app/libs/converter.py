@@ -13,6 +13,27 @@ from .time_utils import TimeUtils
 
 
 class Converter:
+    @staticmethod
+    def candles2tohlc(candles):
+        is_volume = (len(candles[0]) > 5)
+        times = []
+        op = []
+        hi = []
+        lo = []
+        cl = []
+        vol = []
+        for candle in candles:
+            times.append(candle[0])
+            op.append(candle[1])
+            hi.append(candle[2])
+            lo.append(candle[3])
+            cl.append(candle[4])
+            if is_volume:
+                vol.append(candle[5])
+        if is_volume:
+            return [times, op, hi, lo, cl, vol]
+        else:
+            return [times, op, hi, lo, cl]
     
     @staticmethod
     def df2Candles(df: DataFrame):
@@ -31,6 +52,19 @@ class Converter:
             v = df[const.VOLUME].to_numpy()
             dic[const.VOUME] = v
         return dic
+    
+    @staticmethod
+    def df2tohlcv(df: DataFrame) ->dict:
+        t = df[const.TIME].to_list()
+        o = df[const.OPEN].to_numpy()
+        h = df[const.HIGH].to_numpy()
+        l = df[const.LOW].to_numpy()
+        c = df[const.CLOSE].to_numpy()
+        tohlcv = [t,  o, h, l, c]
+        if const.VOLUME in df.columns:
+            v = df[const.VOLUME].to_numpy()
+            tohlcv.append(v)
+        return tohlcv
     
     @staticmethod
     def tohlcv2Candles(tohlcv):
@@ -114,15 +148,15 @@ class Converter:
     
     # tohlcv: tohlcv arrays
     @staticmethod
-    def resample(tohlcv: dict, interval: int, unit: const.TimeUnit):        
-        time = tohlcv[const.TIME]
+    def resample(tohlcv: list, interval: int, unit: const.TimeUnit):        
+        time = tohlcv[0]
         n = len(time)
-        op = tohlcv[const.OPEN]
-        hi = tohlcv[const.HIGH]
-        lo = tohlcv[const.LOW]
-        cl = tohlcv[const.CLOSE]
-        if const.VOLUME in tohlcv.keys():
-            vo = tohlcv[const.TIME]
+        op = tohlcv[1]
+        hi = tohlcv[2]
+        lo = tohlcv[3]
+        cl = tohlcv[4]
+        if len(tohlcv) > 5:
+            vo = tohlcv[5]
             is_volume = True
         else:
             is_volume = False
@@ -143,7 +177,7 @@ class Converter:
                 tmp_candles.append(values)
             elif time[i] > t_round:
                 tmp_candles = []
-        return Converter.candles2dic(candles), candles, tmp_candles
+        return Converter.candle (candles), candles, tmp_candles
     
     @staticmethod
     def roundTime(time: datetime, interval: int, unit: const.TimeUnit):

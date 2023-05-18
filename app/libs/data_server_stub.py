@@ -11,8 +11,9 @@ from polars import DataFrame
 import numpy as np
 import glob
 import pytz
-from const import const
-from time_utils import TimeUtils
+from .const import const
+from .time_utils import TimeUtils
+from .converter import Converter
 
 def fileList(dir_path, extension):
     path = os.path.join(dir_path, '*.' + extension)
@@ -70,6 +71,10 @@ class DataServerStub:
         tohlcv = self.parseTime(tohlcv, tzinfo)
         self.tohlcv = tohlcv
         
+    def importDf(self, df):
+        tohlcv = Converter.df2tohlcv(df)
+        self.tohlcv = tohlcv
+                
     def importData(self, tohlcv):
         self.tohlcv = tohlcv
         

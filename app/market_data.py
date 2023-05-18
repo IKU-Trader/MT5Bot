@@ -15,35 +15,13 @@ from libs.utils import Utils
 from libs.time_utils import TimeUtils
 from libs.data_buffer import ResampleDataBuffer
 from libs.const import const
-
-
+from libs.converter import Converter
 
 def currentPath():
     return os.path.dirname(os.path.abspath(__file__))
 
 def absPath(relative_path):
     return os.path.join(currentPath(), relative_path)
-
-def candles2tohlc(candles):
-    is_volume = (len(candles[0]) > 5)
-    times = []
-    op = []
-    hi = []
-    lo = []
-    cl = []
-    vol = []
-    for candle in candles:
-        times.append(candle[0])
-        op.append(candle[1])
-        hi.append(candle[2])
-        lo.append(candle[3])
-        cl.append(candle[4])
-        if is_volume:
-            vol.append(candle[5])
-    if is_volume:
-        return [times, op, hi, lo, cl, vol]
-    else:
-        return [times, op, hi, lo, cl]
     
 # ------
     
@@ -98,7 +76,7 @@ class ClickSecData:
                     if len(l) > 0:
                         files += l
         candles = self.getCandles(files, self.str2timeGold)
-        tohlc = candles2tohlc(candles)
+        tohlc = Converter.candles2tohlc(candles)
         return candles, tohlc
     
     def fxData(self, symbol, from_year, from_month, to_year, to_month, interval_minutes):
@@ -120,7 +98,7 @@ class ClickSecData:
                 year += 1
                 month = 1
         candles = self.getCandles(files, self.str2timeFx)
-        tohlc = candles2tohlc(candles)
+        tohlc = Converter.candles2tohlc(candles)
         return candles, tohlc
     
 class MT5Data:

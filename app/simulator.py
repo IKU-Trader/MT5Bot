@@ -1,21 +1,12 @@
 # -*- coding: utf-8 -*-
 """
-Created on Sat Apr  8 19:33:03 2023
-
-@author: IKU-Trader
-"""
-
-# -*- coding: utf-8 -*-
-"""
 Created on Tue Mar 14 20:41:14 2023
 
 @author: IKU-Trader
 """
 import os
 import sys
-sys.path.append(os.path.join(os.path.dirname(__file__), '../Utilities'))
-sys.path.append(os.path.join(os.path.dirname(__file__), '../MarketData'))
-sys.path.append(os.path.join(os.path.dirname(__file__), '../TechnicalAnalysis'))
+
 
 import numpy as np
 import pandas as pd
@@ -26,13 +17,13 @@ from dash.dependencies import Input, Output, State
 import plotly.graph_objects as go
 from plotly.figure_factory import create_candlestick
 
-from time_utils import TimeUtils
-from utils import Utils
-from const import const
-from market_data import MarketData
-from data_server_stub import DataServerStub
-from data_buffer import DataBuffer, ResampleDataBuffer
-from technical_analysis import TA
+from libs.time_utils import TimeUtils
+from libs.utils import Utils
+from libs.const import const
+from .market_data import MarketData
+from libs.data_server_stub import DataServerStub
+from libs.data_buffer import DataBuffer, ResampleDataBuffer
+from libs.technical_analysis import TA
 from datetime import datetime
 
 

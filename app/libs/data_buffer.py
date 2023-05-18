@@ -123,7 +123,7 @@ class DataBuffer:
 # -----
 
 class ResampleDataBuffer(DataBuffer):
-    def __init__(self, tohlcv, ta_params: list, interval_minutes: int):
+    def __init__(self, tohlcv: list, ta_params: list, interval_minutes: int):
         if interval_minutes > 60:
             raise Exception('Bad interval_minutes')
         tohlcv_dic, candles, tmp_candles = Converter.resample(tohlcv, interval_minutes, const.UNIT_MINUTE)
