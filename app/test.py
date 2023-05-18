@@ -37,7 +37,8 @@ def test():
     tohlcv = server.init(5000, step_sec=10)
     
     ta_params = TA.full_kit()
-    buffer = ResampleDataBuffer(tohlcv, ta_params, 5)
+    dic = Converter.arrays2Dic(tohlcv)
+    buffer = ResampleDataBuffer(dic, ta_params, 5)
 
     for i in range(10):
         current, tmp = server.nextData()
@@ -45,6 +46,9 @@ def test():
             break
         print(current)
         print(tmp)
+        buffer.update([current, tmp])
+        
+        
        
 if __name__ == '__main__':
     test()

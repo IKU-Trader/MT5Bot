@@ -97,6 +97,13 @@ class Converter:
             return dic, []
 
     @staticmethod        
+    def dic2Arrays(dic: dict):
+        arrays = [dic[const.TIME], dic[const.OPEN], dic[const.HIGH], dic[const.LOW], dic[const.CLOSE]]
+        if const.VOLUME in dic.keys():
+            arrays.append(dic[const.VOLUME])
+        return arrays 
+    
+    @staticmethod        
     def arrays2Dic(tohlcvArrays: list):
         dic = {}
         dic[const.TIME] = tohlcvArrays[0]
@@ -148,15 +155,15 @@ class Converter:
     
     # tohlcv: tohlcv arrays
     @staticmethod
-    def resample(tohlcv: list, interval: int, unit: const.TimeUnit):        
-        time = tohlcv[0]
+    def resample(dic: dict, interval: int, unit: const.TimeUnit):        
+        time = dic[const.TIME]
         n = len(time)
-        op = tohlcv[1]
-        hi = tohlcv[2]
-        lo = tohlcv[3]
-        cl = tohlcv[4]
-        if len(tohlcv) > 5:
-            vo = tohlcv[5]
+        op = dic[const.OPEN]
+        hi = dic[const.HIGH]
+        lo = dic[const.LOW]
+        cl = dic[const.CLOSE]
+        if const.VOLUME in dic.keys():
+            vo = dic[const.VOLUME]
             is_volume = True
         else:
             is_volume = False
@@ -177,7 +184,7 @@ class Converter:
                 tmp_candles.append(values)
             elif time[i] > t_round:
                 tmp_candles = []
-        return Converter.candle (candles), candles, tmp_candles
+        return Converter.candles2dic(candles), candles, tmp_candles
     
     @staticmethod
     def roundTime(time: datetime, interval: int, unit: const.TimeUnit):
