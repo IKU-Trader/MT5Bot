@@ -30,25 +30,13 @@ from libs.converter import Converter
 from libs.const import const
 
 
-def prepare_data_for_model_input(prices, ma):
-    '''
-        Input:
-        prices (df) - Dataframe of close prices
-        ma (int) - legth of the moveing average
-        
-        Output:
-        prices(df) - An enhanced prices dataframe, with moving averages and log return columns
-        prices_array(nd.array) - an array of log returns
-    '''
-    
-    intrument = prices.columns.name
-    prices[f'{intrument}_ma'] = prices.rolling(ma).mean()
-    prices[f'{intrument}_log_return'] = np.log(prices[f'{intrument}_ma']/prices[f'{intrument}_ma'].shift(1)).dropna()
- 
-    prices.dropna(inplace = True)
-    prices_array = np.array([[q] for q in prices[f'{intrument}_log_return'].values])
-    
-    return prices, prices_array
+def preprocess(df, ma_window):
+    df['price'] = df[const.CLOSE]
+    df= df.with_columns(df['price'].rolling_mean(ma_window).alias('ma'))
+    log_return = np.log(df['price'] / df['price'].shift(1))
+    df.with_columns(pl.Series(name='log_return', values=log_return))
+    df.dropna(inplace = True)
+    return df['log_return'].to_numpy()
 
 def load_data(ticker, timeframe):
     mt5 = MT5Data('../market_data/mt5/gemforex/' + timeframe)
@@ -62,7 +50,7 @@ def load_data(ticker, timeframe):
 
 def main():
     df = load_data('DOWUSD', 'D1')
-    prices, prices_array = prepare_data_for_model_input(df[[const.TIME, const.CLOSE]], 16)
+    prices = preprocess(df, 16)
        
     pass
 if __name__ == '__main__':
