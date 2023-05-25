@@ -112,7 +112,10 @@ class MT5Data:
             dir_path, filename = os.path.split(path)
             if filename.find(ticker_symbol) >= 0 and filename.find(timeframe) >= 0:
                 df = pl.read_csv(path, separator='\t')
-                return self.parse(df)
+                if timeframe.lower() == 'd1':
+                    return self.parse_day(df)
+                else:
+                    return self.parse(df)
             
     def parse(self, df):
         time_str = df['<DATE>'] + ' ' + df['<TIME>']
@@ -122,6 +125,13 @@ class MT5Data:
         print(out.head())
         return out
         
+    def parse_day(self, df):
+        time_str = df['<DATE>']
+        time = TimeUtils.str2pytimeArray(time_str, form='%Y.%m.%d', timezone_str='+0900')
+        d = {const.TIME: time, const.OPEN: df["<OPEN>"], const.HIGH: df["<HIGH>"], const.LOW: df['<LOW>'], const.CLOSE: df['<CLOSE>']}
+        out = pl.DataFrame(d)
+        print(out.head())
+        return out    
     
 if __name__ == '__main__':
     mt5_data = MT5Data()
