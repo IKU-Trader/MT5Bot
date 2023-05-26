@@ -22,21 +22,40 @@ import math
 
 from libs.utils import Utils
 from libs.time_utils import TimeUtils
-from libs.data_buffer import ResampleDataBuffer
 from market_data import MT5Data
 from libs.candle_chart import CandleChart, BandPlot, makeFig, gridFig, Colors
 from libs.technical_analysis import TA
 from libs.converter import Converter
 from libs.const import const
 
-
+class RegimeDetector:
+ 
+    def get_regimes_hmm(self, input_data, params):
+        hmm_model = self.initialise_model(GaussianHMM(), params).fit(input_data)
+        return hmm_model
+    
+    def get_regimes_clustering(self, params):
+        clustering =  self.initialise_model(AgglomerativeClustering(), params)
+        return clustering
+    
+    def get_regimes_gmm(self, input_data, params):
+        gmm = self.initialise_model(GaussianMixture(), params).fit(input_data)
+        return gmm
+        
+    def initialise_model(self, model, params):
+        for parameter, value in params.items():
+            setattr(model, parameter, value)
+        return model
+    
 def preprocess(df, ma_window):
-    df['price'] = df[const.CLOSE]
-    df= df.with_columns(df['price'].rolling_mean(ma_window).alias('ma'))
+    df = df.with_columns(df[const.CLOSE].alias('price'))
+    df = df.with_columns(df['price'].rolling_mean(ma_window).alias('ma'))
     log_return = np.log(df['price'] / df['price'].shift(1))
-    df.with_columns(pl.Series(name='log_return', values=log_return))
-    df.dropna(inplace = True)
-    return df['log_return'].to_numpy()
+    df = df.with_columns(pl.Series(name='log_return', values=log_return))
+    df = df.drop_nulls()
+    array = df['log_return'].to_numpy()
+    array = array.reshape(-1, 1)
+    return df, array
 
 def load_data(ticker, timeframe):
     mt5 = MT5Data('../market_data/mt5/gemforex/' + timeframe)
@@ -46,11 +65,33 @@ def load_data(ticker, timeframe):
     print(time[0], '-->', time[-1])
     return df
     
+def plot_hidden_states(df, clustering_states):
+    fig, ax = makeFig(1, 1, (20, 6))
+    chart = CandleChart(fig, ax)
+    
+    min = np.min(clustering_states)
+    max = np.max(clustering_states)
+    
+    colors = ['red', 'blue', 'green', 'orange', 'yellow']
+    price = df['price']
+    for i in range(min, max + 1):
+        array = [np.nan if np.isnan(p) else p for p in price]    
+        chart.drawLine(df[const.TIME], array, color=colors[i])
+    
 
 
 def main():
     df = load_data('DOWUSD', 'D1')
-    prices = preprocess(df, 16)
+    n = len(df)
+    df = df[:int(n / 4), :]
+    
+    df, prices = preprocess(df, 7)
+    detector = RegimeDetector()
+    params = {'n_clusters': 2, 'linkage': 'complete',  'metric': 'manhattan', 'random_state':100}
+    clustering = detector.get_regimes_clustering(params)
+    clustering_states = clustering.fit_predict(prices)
+    plot_hidden_states(df, clustering_states)
+
        
     pass
 if __name__ == '__main__':
