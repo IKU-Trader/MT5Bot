@@ -66,19 +66,22 @@ def load_data(ticker, timeframe):
     return df
     
 def plot_hidden_states(df, clustering_states):
-    fig, ax = makeFig(1, 1, (20, 6))
+    fig, ax = makeFig(1, 1, (12, 8))
     chart = CandleChart(fig, ax)
-    
-    min = np.min(clustering_states)
-    max = np.max(clustering_states)
-    
-    colors = ['red', 'blue', 'green', 'orange', 'yellow']
+    states = set(clustering_states)
+    colors = ['red', 'blue', 'green', 'orange', 'yellow', 'brown', 'violet']
     price = df['price']
-    for i in range(min, max + 1):
-        array = [np.nan if np.isnan(p) else p for p in price]    
-        chart.drawLine(df[const.TIME], array, color=colors[i])
+    time = df[const.TIME]
+    for i, state in enumerate(states):
+        c = colors[i]
+        array = []
+        for p, s in zip(price, clustering_states):
+            if s == state:
+                array.append(p)
+            else:
+                array.append(np.nan)
+        chart.drawLine(time, array, color=c)
     
-
 
 def main():
     df = load_data('DOWUSD', 'D1')
