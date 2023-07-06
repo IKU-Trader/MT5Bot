@@ -1,0 +1,176 @@
+import MetaTrader5 as mt5
+import pandas as pd
+
+mt5.initialize(login = 51061338,server = "ICMarketsSC-Demo",password ="kycpV2QK")
+
+
+
+def buy_limit(symbol,volume,price):
+    request = mt5.order_send({
+        "action": mt5.TRADE_ACTION_PENDING,
+        "symbol": symbol,
+        "volume": volume,
+        "type": mt5.ORDER_TYPE_BUY_LIMIT,
+        "price": price,
+        "deviation": 20,
+        "magic": 100,
+        "comment": "python market order",
+        "type_time": mt5.ORDER_TIME_GTC,
+        "type_filling": mt5.ORDER_FILLING_IOC,
+    })
+
+    print(request)
+
+def sell_limit(symbol,volume,price):
+    request = mt5.order_send({
+        "action": mt5.TRADE_ACTION_PENDING,
+        "symbol": symbol,
+        "volume": volume,
+        "type": mt5.ORDER_TYPE_SELL_LIMIT,
+        "price": price,
+        "deviation": 20,
+        "magic": 100,
+        "comment": "python market order",
+        "type_time": mt5.ORDER_TIME_GTC,
+        "type_filling": mt5.ORDER_FILLING_IOC,
+    })
+
+    print(request)
+
+
+
+def cal_profit(symbol):
+    usd_positions = mt5.positions_get(symbol=symbol)
+    df = pd.DataFrame(list(usd_positions), columns=usd_positions[0]._asdict().keys())
+    df['time'] = pd.to_datetime(df['time'], unit='s')
+    df.drop(['time_update', 'time_msc', 'time_update_msc', 'external_id'], axis=1, inplace=True)
+    profit = float(df["profit"].sum())
+    return profit
+
+def cal_volume(symbol):
+    usd_positions = mt5.positions_get(symbol=symbol)
+    df = pd.DataFrame(list(usd_positions), columns=usd_positions[0]._asdict().keys())
+    df['time'] = pd.to_datetime(df['time'], unit='s')
+    df.drop(['time_update', 'time_msc', 'time_update_msc', 'external_id'], axis=1, inplace=True)
+    profit = float(df["volume"].sum())
+    return profit
+
+def cal_buy_profit(symbol):
+    usd_positions = mt5.positions_get(symbol=symbol)
+    df = pd.DataFrame(list(usd_positions), columns=usd_positions[0]._asdict().keys())
+    df['time'] = pd.to_datetime(df['time'], unit='s')
+    df.drop(['time_update', 'time_msc', 'time_update_msc', 'external_id'], axis=1, inplace=True)
+    df = df.loc[df.type == 0]
+    profit = float(df["profit"].sum())
+    return profit
+
+def cal_sell_profit(symbol):
+    usd_positions = mt5.positions_get(symbol=symbol)
+    df = pd.DataFrame(list(usd_positions), columns=usd_positions[0]._asdict().keys())
+    df['time'] = pd.to_datetime(df['time'], unit='s')
+    df.drop(['time_update', 'time_msc', 'time_update_msc', 'external_id'], axis=1, inplace=True)
+    df = df.loc[df.type == 1]
+    profit = float(df["profit"].sum())
+    return profit
+
+def cal_buy_margin(symbol):
+    usd_positions = mt5.positions_get(symbol=symbol)
+    df = pd.DataFrame(list(usd_positions), columns=usd_positions[0]._asdict().keys())
+    df['time'] = pd.to_datetime(df['time'], unit='s')
+    df.drop(['time_update', 'time_msc', 'time_update_msc', 'external_id'], axis=1, inplace=True)
+    df = df.loc[df.type == 0]
+
+    sum = 0
+    for i in df.index:
+        volume = df.volume[i]
+        open_price = df.price_open[i]
+        margin = mt5.order_calc_margin(mt5.ORDER_TYPE_BUY, symbol,volume,open_price)
+        sum += margin
+    return sum
+
+def cal_sell_margin(symbol):
+    usd_positions = mt5.positions_get(symbol=symbol)
+    df = pd.DataFrame(list(usd_positions), columns=usd_positions[0]._asdict().keys())
+    df['time'] = pd.to_datetime(df['time'], unit='s')
+    df.drop(['time_update', 'time_msc', 'time_update_msc', 'external_id'], axis=1, inplace=True)
+    df = df.loc[df.type == 1]
+
+    sum = 0
+    for i in df.index:
+        volume = df.volume[i]
+        open_price = df.price_open[i]
+        margin = mt5.order_calc_margin(mt5.ORDER_TYPE_SELL, symbol,volume,open_price)
+        sum += margin
+    return sum
+
+def cal_pct_buy_profit(symbol):
+    profit = cal_buy_profit(symbol)
+    margin = cal_buy_margin(symbol)
+    pct = (profit/margin)*100
+    return pct
+
+def cal_pct_sell_profit(symbol):
+    profit = cal_sell_profit(symbol)
+    margin = cal_sell_margin(symbol)
+    pct = (profit/margin)*100
+    return pct
+
+
+def close_position(position):
+    tick = mt5.symbol_info_tick(position.symbol)
+
+    request = {
+        "action": mt5.TRADE_ACTION_DEAL,
+        "position": position.ticket,
+        "symbol": position.symbol,
+        "volume": position.volume,
+        "type": mt5.ORDER_TYPE_BUY if position.type == 1 else mt5.ORDER_TYPE_SELL,
+        "price": tick.ask if position.type == 1 else tick.bid,
+        "deviation": 20,
+        "magic": 100,
+        "comment": "python script close",
+        "type_time": mt5.ORDER_TIME_GTC,
+        "type_filling": mt5.ORDER_FILLING_IOC,
+    }
+
+    result = mt5.order_send(request)
+    return result
+
+def close_all(symbol):
+    position = mt5.positions_get(symbol=symbol)
+    for position in position:
+        close_position(position)
+
+
+def delete_pending(ticket):
+    close_request = {
+        "action": mt5.TRADE_ACTION_REMOVE,
+        "order": ticket,
+        "type_time": mt5.ORDER_TIME_GTC,
+        "type_filling": mt5.ORDER_FILLING_IOC,
+    }
+    result = mt5.order_send(close_request)
+
+    if result.retcode != mt5.TRADE_RETCODE_DONE:
+        result_dict = result._asdict()
+        print(result_dict)
+    else:
+        print('Delete complete...')
+
+
+def close_limit(symbol):
+    orders = mt5.orders_get(symbol=symbol)
+    df = pd.DataFrame(list(orders), columns=orders[0]._asdict().keys())
+    df.drop(['time_done', 'time_done_msc', 'position_id', 'position_by_id', 'reason', 'volume_initial',
+             'price_stoplimit'], axis=1, inplace=True)
+    df['time_setup'] = pd.to_datetime(df['time_setup'], unit='s')
+    for ticket in df.ticket:
+        delete_pending(ticket)
+
+
+
+
+
+
+
+
