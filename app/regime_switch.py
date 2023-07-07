@@ -47,6 +47,13 @@ class RegimeDetector:
             setattr(model, parameter, value)
         return model
     
+    
+def create_hmm_model(log_returns):
+    model = GaussianHMM(n_components=3, covariance_type="full", n_iter=1000)
+    model.fit(log_returns)
+    print("Model Score:", model.score(log_returns))
+    return model
+
 def preprocess(df, ma_window):
     df = df.with_columns(df[const.CLOSE].alias('price'))
     df = df.with_columns(df['price'].rolling_mean(ma_window).alias('ma'))
@@ -67,11 +74,12 @@ def load_data(ticker, timeframe):
     
 def plot_hidden_states(df, clustering_states):
     fig, ax = makeFig(1, 1, (12, 8))
-    chart = CandleChart(fig, ax)
+    chart = CandleChart(fig, ax, date_format=CandleChart.DATE_FORMAT_YEAR_MONTH)
     states = set(clustering_states)
     colors = ['red', 'blue', 'green', 'orange', 'yellow', 'brown', 'violet']
     price = df['price']
     time = df[const.TIME]
+    #chart.drawCandle(time, df[const.OPEN], df[const.HIGH], df[const.LOW], df[const.CLOSE])
     for i, state in enumerate(states):
         c = colors[i]
         array = []
@@ -80,23 +88,41 @@ def plot_hidden_states(df, clustering_states):
                 array.append(p)
             else:
                 array.append(np.nan)
-        chart.drawLine(time, array, color=c)
+        chart.drawLine(time, array, color=c, xlabel=True)
     
+def print_term(label, df: DataFrame):
+    time = df[const.TIME]
+    print(label + ' Date ', time[0], '～', time[-1])
+    
+def main0():
+    df = load_data('DOWUSD', 'D1')
+    n = len(df)
+    m = int(n / 2)
+    train = df[m:, :]
+    test = df[m:, :]
+    
+    train, train_prices = preprocess(train, 7)
+    detector = RegimeDetector()
+    params = {'n_clusters': 3, 'linkage': 'complete',  'metric': 'manhattan', 'random_state':100}
+    clustering = detector.get_regimes_clustering(params)
+    clustering_states = clustering.fit_predict(train_prices)
+    plot_hidden_states(train, clustering_states)
 
 def main():
     df = load_data('DOWUSD', 'D1')
     n = len(df)
-    df = df[:int(n / 4), :]
+    m = int(n / 2)
+    train = df[:m, :]
+    print_term('Train ', train)
+    test = df[m:, :]
+    print_term('Test ', test)
     
-    df, prices = preprocess(df, 7)
-    detector = RegimeDetector()
-    params = {'n_clusters': 2, 'linkage': 'complete',  'metric': 'manhattan', 'random_state':100}
-    clustering = detector.get_regimes_clustering(params)
-    clustering_states = clustering.fit_predict(prices)
-    plot_hidden_states(df, clustering_states)
-
-       
-    pass
+    train, train_returns = preprocess(train, 7)
+    test, test_returns = preprocess(test, 7)
+    model = create_hmm_model(train_returns)
+    states = model.predict(test_returns)
+    plot_hidden_states(test, states)       
+    
 if __name__ == '__main__':
     main()
 

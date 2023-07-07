@@ -185,6 +185,7 @@ class CandleChart:
     DATE_FORMAT_DAY = '%m-%d'
     DATE_FORMAT_DATE_TIME = '%m-%d %H:%M'
     DATE_FORMAT_DAY_HOUR = '%d/%H'
+    DATE_FORMAT_YEAR_MONTH = '%Y-%m'
     
     def __init__(self, fig, ax, title=None, comment=None, write_time_range=False, date_format=None):
         if date_format is None:
