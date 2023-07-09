@@ -172,7 +172,7 @@ def main(brand, timeframe, train_rate, plot_daily=False):
 if __name__ == '__main__':
     market = 'GBPAUD'
     timeframes = ['M5'] #, 'M5', 'M1']
-    rates = [0.80] #, 0.8, 0.8]
+    rates = [0.90] #, 0.8, 0.8]
     for timeframe, rate in zip(timeframes, rates):
         main(market, timeframe, rate, True)
 
